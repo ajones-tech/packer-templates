@@ -1,0 +1,26 @@
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Packer specific
+*.iso
+packer_cache/
+packer-crash.log
+crash.log
+*.pkr.hcl.log
+.packer.d/
+
+# Sensitive Variable files / Secrets
+.env
+.env.*
+*.pkrvars.hcl
+secret.pkr.hcl
+credentials.pkr.hcl
+
+# Output directories
+output-*/
