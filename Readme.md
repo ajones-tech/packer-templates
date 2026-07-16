@@ -14,16 +14,10 @@ This project bridges the gap between orchestration and immutable server deployme
 * **Vast Documentation & Official Guide:** Supported by comprehensive documentation, practical examples, and the official guide available directly via the [HashiCorp Packer Documentation](https://developer.hashicorp.com/packer/docs).
 
 ## Repository Structure
-Configurations are separated by operating system to maintain a clean, modular image factory. Unattended installation files (`preseed.cfg`, `autounattend.xml`, `cloud-init`) are nested within their respective builds to ensure agnostic deployments. All visual documentation assets are stored in the `Images/` directory.
+Configurations are separated by operating system to maintain a clean, modular image factory. Unattended installation files (`preseed.cfg`, `autounattend.xml`, `cloud-init`) are nested within their respective builds to ensure agnostic deployments.
 
 ```text
 .
-├── Images/
-│   ├── packer-server-complete.png
-│   ├── ubuntu-packer-ssh.png
-│   ├── ubuntu-server-unattended.png
-│   ├── windows-server.png
-│   └── windows-unauttended.png
 ├── kali/
 │   ├── kali.pkr.hcl
 │   └── http/
@@ -45,6 +39,7 @@ Configurations are separated by operating system to maintain a clean, modular im
     ├── winserver-2k19.pkr.hcl
     └── autounattend.xml
 ```
+
 ## Usage and Execution
 
 ### 1. Initialize Packer
@@ -111,9 +106,8 @@ Visualizing the unattended configuration process via the Proxmox console:
 
 ## Lessons Learned
 
-* **Reference Help from Official and Trusted Sources:** There is zero reason to write complex configuration files from scratch. Use established online generators and official documentation to build these files:
+* **Use Trusted Public Answer File Generators and Official Sites for Assistance Constructing Answer files:**
     * **Windows:** [Schneegans Windows Unattend Generator](https://schneegans.de/windows/unattend-generator/) and the [Official Microsoft Sysprep Docs](https://learn.microsoft.com/en-us/windows-hardware/manufacture/desktop/update-windows-settings-and-scripts-create-your-own-answer-file-sxs).
     * **Ubuntu:** [Ubuntu Autoinstall Configuration Manual](https://canonical-subiquity.readthedocs-hosted.com/en/latest/reference/autoinstall-reference.html) for exact Subiquity syntax.
     * **Debian:** [Official Debian Preseed Example](https://www.debian.org/releases/stable/example-preseed.txt).
-* **Practical Tool for CI/CD & Version Control:** Packer has proven proficient for promoting and implementing Continuous Integration, Continuous Delivery, Continuous Deployment, and version control. It forces a clean workflow where every infrastructure change is tracked in Git and ready for use for various hosting infrastructures.
-* **Baseline Templates Save Hours:** The upfront configuration time pays off immediately. Having baseline templates ready to deploy saves numerous hours of manually installing the same OSs repeatedly; providing a clean, identical foundation even if those machines are eventually configured for completely different downstream use cases.
+* **Baseline template saves hours and gives a ready baseline for any infrastructure, adding to my understanding of continuous delivery/integration and version control infrastructure.**
