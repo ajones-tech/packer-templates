@@ -2,34 +2,118 @@
 
 This repository contains the Packer build configurations and automated answer files used to generate the baseline machine images for my infrastructure environment. 
 
-Packer perfectly complements orchestration workflows. I adopted it when I hit the limitations of manual image management: while downstream tools can provision infrastructure at scale, they cannot natively create the base OS images—complete with pre-configured SSH keys, network settings, and essential software—required for a true zero-touch deployment.
+Packer perfectly complements orchestration workflows. I adopted it when using Terraform; I acknowledged the limits with it being an infrastructure provisioning tool. Without a pre-configured image, the machines will be installed from whatever ISO file I used and be completely independent machines in terms of software installed, SSH running, QEMU agent installed and enabled for Proxmox hosted machines, etc.
 
-## Key Benefits
-* **Idempotency:** Packer enforces a defined, reproducible state for machine images, ensuring that components not intended to change remain consistent across every deployment.
-* **Scalability:** By leveraging providers like Proxmox, AWS, Azure, and Hyper-V, I can use a single baseline image configuration to deploy across multiple, heterogeneous platforms.
-* **CI/CD Integration:** Enables a true "disposable infrastructure" model; allowing for the destruction and recreation of machine environments within a single automated pipeline run without manual intervention.
+## Key Engineering Benefits & Proficiencies
+This project bridges the gap between orchestration and immutable server deployment. By integrating these disciplines, this repository demonstrates several core NetDevOps methodologies:
+
+* **Immutable Infrastructure (Packer & State Management):** Enforces a defined, reproducible state for machine images. This eliminates configuration drift and ensures idempotency across every deployment.
+* **Zero-Touch Provisioning (Unattended OS Configuration):** Leverages `preseed.cfg`, `autounattend.xml`, and `cloud-init` to entirely remove manual intervention from the deployment pipeline.
+* **Scalable Deployments (Virtualization & API Integration):** Integrates directly with the Proxmox VE API for bare-metal automated builds, utilizing a declarative HCL baseline that can easily scale across AWS, Azure, GCP, and Hyper-V.
+* **CI/CD Methodology:** Enables a true "disposable infrastructure" model. Machine environments can be destroyed and recreated within a single automated pipeline run, reflecting enterprise-grade configuration management.
+* **Vast Documentation & Official Guide:** Supported by comprehensive documentation, practical examples, and the official guide available directly via the [HashiCorp Packer Documentation](https://developer.hashicorp.com/packer/docs).
 
 ## Repository Structure
-Configurations are separated by operating system to maintain a clean, modular image factory. Unattended installation files (`preseed.cfg`, `autounattend.xml`, `cloud-init`) are nested within their respective builds to ensure agnostic deployments.
+Configurations are separated by operating system to maintain a clean, modular image factory. Unattended installation files (`preseed.cfg`, `autounattend.xml`, `cloud-init`) are nested within their respective builds to ensure agnostic deployments. All visual documentation assets are stored in the `Images/` directory.
 
 ```text
 .
+├── Images/
+│   ├── packer-server-complete.png
+│   ├── ubuntu-packer-ssh.png
+│   ├── ubuntu-server-unattended.png
+│   ├── windows-server.png
+│   └── windows-unauttended.png
 ├── kali/
+│   ├── kali.pkr.hcl
+│   └── http/
+│       └── preseed.cfg
 ├── ubuntu_desktop/
+│   ├── ubuntu-desktop.pkr.hcl
+│   └── http/
+│       ├── meta-data
+│       └── user-data
 ├── ubuntu_server/
+│   ├── ubuntu-server.pkr.hcl
+│   └── http/
+│       ├── meta-data
+│       └── user-data
 ├── win11/
+│   ├── win11.pkr.hcl
+│   └── autounattend.xml
 └── winserver_2k19/
+    ├── winserver-2k19.pkr.hcl
+    └── autounattend.xml
+```
+## Usage and Execution
+
+### 1. Initialize Packer
+Initialize the working directory to download and install the necessary plugins (such as the Proxmox builder plugin):
+```bash
+packer init .
 ```
 
-## Updates & Roadmap
-I am currently refining my baseline templates to ensure they are lean, secure, and ready for automated deployment across my bare-metal Proxmox environment running on my local hardware.
+### 2. Validate the Configuration
+Run a validation check against your template files to ensure there are no syntax errors or invalid configurations before starting a build:
+```bash
+packer validate .
+```
 
-* **Future Implementations:** Golden templates will be used to provision baseline machines across various platforms, as well as to "perfect" my current templates for maximum deployment efficiency.
-* **Ongoing Task:** Ironing out the kinks in `preseed.cfg` (Debian) and `autounattended.xml` (Windows) to ensure fully unattended, zero-touch installations without manual prompts.
-* **Upcoming Milestone:** Expanding this image factory to support my preparation for the Microsoft AZ-104 and HashiCorp Terraform certifications.
+### 3. Run the Build
+Execute the build pipeline using your configurations:
+```bash
+packer build .
+```
 
-## Skills Displayed
-1. **Golden Image Creation:** HashiCorp Packer, State Management, Idempotency.
-2. **Zero-Touch Provisioning:** Unattended OS configuration (`preseed.cfg`, `autounattend.xml`, `cloud-init`).
-3. **Configuration Management:** CI/CD Methodologies, automated baseline deployments.
-4. **Virtualization:** Integrating build pipelines directly with Proxmox VE.
+![Packer Build Complete](Images/packer-server-complete.png)
+
+## Tips, Tricks & Variable Management
+
+To keep these templates agnostic and secure, never hardcode sensitive environment details directly into the `pkr.hcl` files.
+
+### 1. Secrets Management
+You must pass your specific environment details to Packer using a `.pkrvars.hcl` file. Ensure your `.gitignore` is actively blocking any `.env` or `.pkrvars.hcl` files from being pushed to version control.
+
+**Example `secrets.pkrvars.hcl`:**
+```hcl
+proxmox_api_url   = "[https://10.0.0.](https://10.0.0.)X:8006/api2/json"
+proxmox_api_id    = "packer@pve!automation"
+proxmox_api_token = "your-secret-token-here"
+proxmox_node      = "pve-01"
+```
+
+![HCL Variable Configuration](Images/ubuntu-packer-ssh.png)
+
+Run the build by appending the variable flag:
+```bash
+packer build -var-file="../secrets.pkrvars.hcl" .
+```
+
+### 2. Debugging Silent Failures
+If a build hangs during the hypervisor boot sequence or the unattended answer file stalls without throwing an error back to your terminal, you need raw output. Enable verbose logging by appending `PACKER_LOG=1` to your build execution:
+```bash
+PACKER_LOG=1 packer build .
+```
+
+### 3. Code Formatting
+Maintain a clean and standardized repository. Before committing any pipeline changes, format your HCL code to HashiCorp's official standard:
+```bash
+packer fmt .
+```
+## The Zero-Touch Process in Action
+Visualizing the unattended configuration process via the Proxmox console:
+
+![Ubuntu Subiquity Autoinstall](Images/ubuntu-server-unattended.png)
+
+![Windows Automated DiskPart](Images/windows-unauttended.png)
+
+![Provisioned Windows Server](Images/windows-server.png)
+
+## Lessons Learned
+
+* **Reference Help from Official and Trusted Sources:** There is zero reason to write complex configuration files from scratch. Use established online generators and official documentation to build these files:
+    * **Windows:** [Schneegans Windows Unattend Generator](https://schneegans.de/windows/unattend-generator/) and the [Official Microsoft Sysprep Docs](https://learn.microsoft.com/en-us/windows-hardware/manufacture/desktop/update-windows-settings-and-scripts-create-your-own-answer-file-sxs).
+    * **Ubuntu:** [Ubuntu Autoinstall Configuration Manual](https://canonical-subiquity.readthedocs-hosted.com/en/latest/reference/autoinstall-reference.html) for exact Subiquity syntax.
+    * **Debian:** [Official Debian Preseed Example](https://www.debian.org/releases/stable/example-preseed.txt).
+* **Practical Tool for CI/CD & Version Control:** Packer has proven proficient for promoting and implementing Continuous Integration, Continuous Delivery, Continuous Deployment, and version control. It forces a clean workflow where every infrastructure change is tracked in Git and ready for use for various hosting infrastructures.
+* **Baseline Templates Save Hours:** The upfront configuration time pays off immediately. Having baseline templates ready to deploy saves numerous hours of manually installing the same OSs repeatedly; providing a clean, identical foundation even if those machines are eventually configured for completely different downstream use cases.
